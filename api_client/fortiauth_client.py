@@ -21,8 +21,14 @@ from . import exceptions
 from . import base
 from . import constants as const
 from . import client
-from . import generic_request
 from .templates import fortiauth as templates
+from . import eventlet_request
+from . import exceptions
+from werkzeug.datastructures import FileStorage
+from io import BufferedReader
+from codecs import encode
+import random
+import string
 
 LOG = logging.getLogger(__name__)
 
@@ -102,3 +108,49 @@ class FortiAuthApiClient(client.ApiClient):
         if response:
             response.body = self.request_response_body(response)
         return response
+
+    def request(self, opt, content_type=DEFAULT_CONTENT_TYPE, **message):
+        """
+        Issues request to controller.
+        """
+        self.message = self.render(getattr(self._template, opt), **message)
+        method = self.message['method']
+        url = self.message['path']
+        if content_type == const.FAC_CONTENT_TYPE:
+            boundary = ''.join(random.choices(string.ascii_letters+string.digits, k=30))
+            content_type += '; boundary=%s' % boundary
+            self.message['body'] = self._create_form_data(boundary=boundary, **message)
+        body = self.message['body'] if 'body' in self.message else None
+        g = eventlet_request.GenericRequestEventlet(
+            self, method, url, body, content_type, self.user_agent,
+            auto_login=self._auto_login,
+            http_timeout=self._http_timeout,
+            retries=self._retries, redirects=self._redirects,
+            singlethread=self._singlethread)
+        g.start()
+        return self.request_response(method, url, g.join(),
+                                     resp_type=self.message.get('obj_type', None))
+
+    def _create_form_data(self, **kwargs):
+            dataList = []
+            boundary = kwargs.pop('boundary')
+            dataList.append(encode('--' + boundary))
+            for key in kwargs:
+                if isinstance(kwargs[key], BufferedReader) or isinstance(kwargs[key], FileStorage):
+                    if isinstance(kwargs[key], BufferedReader):
+                        filename = kwargs[key].name
+                    else:
+                        filename = kwargs[key].filename
+                    dataList.append(encode('Content-Disposition: form-data; name={0}; filename={1}'.format(key, filename)))
+                    dataList.append(encode('Content-Type: application/octet-stream'))
+                    dataList.append(encode(''))
+                    dataList.append(kwargs[key].read())
+                else:
+                    dataList.append(encode('Content-Disposition: form-data; name={0};'.format(key)))
+                    dataList.append(encode('Content-Type: {}'.format('text/plain')))
+                    dataList.append(encode(''))
+                    dataList.append(encode(kwargs[key]))
+                dataList.append(encode('--' + boundary + '--'))
+            dataList.append(encode(''))
+            body = b'\r\n'.join(dataList)
+            return body

@@ -42,6 +42,8 @@ FTC_FW_VERSION = 'FTC-FW-1.1.0-0866'
 PHEADER_FORMAT = 'I8sIII12s24sI'
 OHEADER_FORMAT = '4s20s20sIII8s44sIIIII'
 
+FAC_CONTENT_TYPE = 'multipart/form-data'
+
 URI_CHAR_CODES = {
     '<': '%3C',
     '>': '%3E',
