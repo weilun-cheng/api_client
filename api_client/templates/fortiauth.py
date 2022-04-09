@@ -74,19 +74,19 @@ MODIFY_USERGROUP = """
         {% if users is defined %}
             "users": ["{{ users }}"]
         {% endif %}
-     }    
+     }
 }
 """
 
 # delete an usergroup
 DELETE_USERGROUP = """
-{    
+{
     {% if id is defined %}
         "path": "/api/v1/usergroups/{{ id }}/",
     {% elif resource_uri is defined %}
         "path": "{{ resource_uri }}",
-    {% endif %}        
-    "method": "DELETE" 
+    {% endif %}
+    "method": "DELETE"
 }
 """
 
@@ -174,7 +174,7 @@ CREATE_USER = """
         {% endif %}
         {% for k, v in _options.items() if v is defined %}
             "{{ k }}": "{{ v }}",
-        {% endfor %}        
+        {% endfor %}
         "username": "{{ username }}"
     }
 }
@@ -309,7 +309,7 @@ CREATE_PUSHAUTHRESP = """
     "method": "POST",
     "body": {
         {%
-            set _options = {                
+            set _options = {
                 "token_code": token_code,
                 "session_id": session_id,
                 "message": message,
@@ -546,15 +546,14 @@ MODIFY_FTPSERVER = """
                 "anonymous": anonymous,
                 "name": name,
                 "address": address,
-                "conn_type": conn_type
+                "conn_type": conn_type,
+                "port": port
             }
         %}
         {% for k, v in _options.items() if v is defined %}
-            "{{ k }}": "{{ v }}",
+            "{{ k }}": "{{ v }}"
+            {{ "," if not loop.last }}
         {% endfor %}
-        {% if port is defined %}
-            "port": {{ port }},
-        {% endif %}
     }
 }
 """
@@ -584,13 +583,17 @@ CREATE_SCHEDULED_BACKUP_SETTING = """
                 "ftp": ftp,
                 "ftp_2": ftp_2,
                 "frequency": frequency,
-                "time": time
+                "time": time,
+                "encryption_password": encryption_password
             }
         %}
         {% for k, v in _options.items() if v is defined %}
             "{{ k }}": "{{ v }}",
         {% endfor %}
-        "enabled": "{{ enabled }}"
+        {% if encryption_enabled is defined %}
+            "encryption_enabled": {{ encryption_enabled }},
+        {% endif %}
+        "enabled": {{ enabled }}
     }
 }
 """
@@ -607,12 +610,16 @@ MODIFY_SCHEDULED_BACKUP_SETTING = """
                 "ftp_2": ftp_2,
                 "frequency": frequency,
                 "time": time,
+                "encryption_password": encryption_password
             }
         %}
         {% for k, v in _options.items() if v is defined %}
             "{{ k }}": "{{ v }}",
         {% endfor %}
-        "enabled": "{{ enabled }}"
+        {% if encryption_enabled is defined %}
+            "encryption_enabled": {{ encryption_enabled }},
+        {% endif %}
+        "enabled": {{ enabled }}
     }
 }
 """
@@ -621,7 +628,12 @@ MODIFY_SCHEDULED_BACKUP_SETTING = """
 BACKUP_CONFIG = """
 {
     "path": "/api/v1/recovery/",
-    "method": "GET"
+    "method": "GET",
+    "body": {
+        {% if key is defined %}
+            "key": "{{ key }}"
+        {% endif %}
+    }
 }
 """
 
@@ -645,3 +657,178 @@ UPGRADE_FIRMWARE = """
     "method": "POST"
 }
 """
+
+GET_SNMP_SETTING = """
+{
+    "path": "/api/v1/snmpgeneral/",
+    "method": "GET"
+}
+"""
+
+MODIFY_SNMP_SETTING = """
+{
+    "path": "/api/v1/snmpgeneral/",
+    "method": "PATCH",
+    "body": {
+        {%
+            set _options = {
+                "contact": contact,
+                "decription": description,
+                "location": location,
+                "users": users,
+                "groups": groups,
+                "radius_clients": radius_client,
+                "tacplus_clients": tacplus_client,
+                "auth_events": auth_events,
+                "auth_failures": auth_failures,
+                "cpu": cpu,
+                "memory": memory,
+                "disk": disk,
+            }
+        %}
+        {% for k, v in _options.items() if v is defined %}
+            "{{ k }}": "{{ v }}"
+            {{ "," if not loop.last }}
+        {% endfor %}
+    }
+}
+"""
+
+GET_SNMP_COMMUNITIES = """
+{
+    {% if id is defined %}
+        "path": "/api/v1/snmp/{{ id }}/",
+    {% else %}
+        "path": "/api/v1/snmp/",
+    {% endif %}
+    "method": "GET"
+}
+"""
+
+CREATE_SNMP_COMMUNITY = """
+{
+    "path": "/api/v1/snmp/",
+    "method": "POST",
+    "body": {
+        {%
+            set _options = {
+                "cpu": cpu,
+                "memory": memory,
+                "disk": disk,
+                "interface_ip": interface_ip,
+                "users": users,
+                "groups": groups,
+                "radius_clients": radius_clients,
+                "tacplus_clients": tacplus_clients,
+                "auth_events": auth_events,
+                "auth_failures": auth_failures,
+                "user_lockout": user_lockout,
+                "ha_status": ha_status,
+                "ha_sync": ha_sync,
+                "raid": raid,
+            }
+        %}
+        {% for k, v in _options.items() if v is defined %}
+            "{{ k }}": {{ v }},
+        {% endfor %}
+        "name": "{{ name }}"
+    }
+}
+"""
+
+MODIFY_SNMP_COMMUNITY = """
+{
+    "path": "/api/v1/snmp/{{ id }}/",
+    "method": "PATCH",
+    "body": {
+        {%
+            set _options = {
+                "name": name,
+                "cpu": cpu,
+                "memory": memory,
+                "disk": disk,
+                "interface_ip": interface_ip,
+                "users": users,
+                "groups": groups,
+                "radius_clients": radius_clients,
+                "tacplus_clients": tacplus_clients,
+                "auth_events": auth_events,
+                "auth_failures": auth_failures,
+                "user_lockout": user_lockout,
+                "ha_status": ha_status,
+                "ha_sync": ha_sync,
+                "raid": raid,
+            }
+        %}
+        {% for k, v in _options.items() if v is defined %}
+            "{{ k }}": {{ v }}
+            {{ "," if not loop.last }}
+        {% endfor %}
+    }
+}
+"""
+
+DELETE_SNMP_COMMUNITY = """
+{
+    "path": "/api/v1/snmp/{{ id }}/",
+    "method": "DELETE"
+}
+"""
+
+GET_SNMP_COMMUNITY_HOSTS = """
+{
+    {% if hid is defined %}
+        "path": "/api/v1/snmp/{{ id }}/hosts//{{ hid }}/",
+    {% else %}
+        "path": "/api/v1/snmp/{{ id }}/hosts/",
+    {% endif %}
+    "method": "GET"
+}
+"""
+
+CREATE_SNMP_COMMUNITY_HOST = """
+{
+    "path": "/api/v1/snmp/{{ id }}/hosts/",
+    "method": "POST",
+    "body": {
+        {%
+            set _options = {
+                "query": query,
+                "trap": trap,
+            }
+        %}
+        {% for k, v in _options.items() if v is defined %}
+            "{{ k }}": "{{ v }}",
+        {% endfor %}
+        "address": "{{ address }}"
+    }
+}
+"""
+
+MODIFY_SNMP_COMMUNITY_HOST = """
+{
+    "path": "/api/v1/snmp/{{ id }}/hosts/{{ hid }}/",
+    "method": "PATCH",
+    "body": {
+        {%
+            set _options = {
+                "query": query,
+                "trap": trap,
+                "address": address,
+            }
+        %}
+        {% for k, v in _options.items() if v is defined %}
+            "{{ k }}": "{{ v }}"
+            {{ "," if not loop.last }}
+        {% endfor %}
+    }
+}
+"""
+
+DELETE_SNMP_COMMUNITY_HOST = """
+{
+    "path": "/api/v1/snmp/{{ id }}/hosts/{{ hid }}/",
+    "method": "DELETE"
+}
+"""
+
