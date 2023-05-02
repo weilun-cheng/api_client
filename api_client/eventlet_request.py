@@ -203,6 +203,38 @@ class LoginRequestEventlet(EventletApiRequest):
         return None
 
 
+class FortiPAMLoginRequestEventlet(EventletApiRequest):
+    '''Process a login request.'''
+
+    def __init__(self, client_obj, method, url, body, headers, client_conn=None,
+                 auto_login=False,
+                 http_timeout=request.DEFAULT_HTTP_TIMEOUT,
+                 retries=request.DEFAULT_RETRIES,
+                 redirects=request.DEFAULT_REDIRECTS, singlethread=False):
+        # if headers is None:
+        #     headers = {'Content-Type': 'text/plain'}
+        # else:
+        #     headers['Content-Type'] = 'text/plain'
+        # message = client_obj.render(
+        #     getattr(client_obj._template, 'LOGIN'), username=user, password=password
+        # )
+        # body = message.get('body', None)
+        # super(FortiPAMLoginRequestEventlet, self).__init__(
+        #     client_obj, message['path'], message['method'], body, headers,
+        #     auto_login=False, client_conn=client_conn)
+        super(FortiPAMLoginRequestEventlet, self).__init__(
+            client_obj, url, method, body, headers, client_conn=client_conn,
+            retries=retries,
+            auto_login=auto_login, redirects=redirects,
+            http_timeout=http_timeout, singlethread=singlethread)
+
+    def session_cookie(self):
+        if self.successful():
+            return self.value.getheader("Set-Cookie")
+        return None
+
+
+
 class GetApiProvidersRequestEventlet(EventletApiRequest):
     '''Get a list of API providers.'''
 
